@@ -15,6 +15,15 @@ client.commands = new Collection();
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
+// Global variable to store player last online times
+let playerLastOnline = {};
+try {
+	playerLastOnline = JSON.parse(fs.readFileSync('playerLastOnline.json', 'utf8'));
+} catch {
+	console.log("Parse error");
+}
+
+
 //Register command files
 for (const file of commandFiles) {
         const filePath = path.join(commandsPath, file);
@@ -62,32 +71,98 @@ client.on(Events.InteractionCreate, async interaction => {
 
 //Requirements for scheduler etc...
 var cron = require("cron");
-const date = new Date();
 
 //Run scheduler
 let updater = new cron.CronJob('* * * * *', () => {
         setinfo();
 });
 
-async function setinfo(){
-	//Get data from server
-        await mcsrvstat.fetchJavaServer(serverIP);
+async function setinfo() {
+    // Get data from server
+    await mcsrvstat.fetchJavaServer(serverIP);
 
-	//If server is up
-        if (mcsrvstat.status === true) {
-		//Bot description
-                if(mcsrvstat.oPlayers != 1){
-                        client.user.setActivity(` with my ${mcsrvstat.oPlayers} friends on ${serverIP}!`)
-                }
-                else{   
-                        client.user.setActivity(` with my ${mcsrvstat.oPlayers} friend on ${serverIP}!`)
-                }
+    // If server is up
+    if (mcsrvstat.status === true) {
+        // Bot description
+        if (mcsrvstat.oPlayers !== 1) {
+            client.user.setActivity(` with my ${mcsrvstat.oPlayers} friends on ${serverIP}!`);
+        } else {
+            client.user.setActivity(` with my ${mcsrvstat.oPlayers} friend on ${serverIP}!`);
         }
 
-	//Server is down
-        else{   
-                client.user.setActivity("Touching grass");
+		logPlayerActivity();
+	}
+
+	// Server is down
+	else {
+		client.user.setActivity("Touching grass");
+	}
+}
+
+function logPlayerActivity()
+{
+	let playerLogger = {};
+
+	// Read existing data from the player log file if it exists
+	try {
+		const data = fs.readFileSync('player_log.json', 'utf8');
+		playerLogger = JSON.parse(data);
+
+		//set correct date + remove duplicate players
+		playerLogger.checkedAt = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+
+	} catch (err) {
+		// If the file doesn't exist or there is an error reading it, continue with an empty object
+		console.log("Error reading player log file");
+
+		//make empty object
+		playerLogger = {
+			checkedAt: new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' }),
+			onlinePlayers: [],
+			overduePlayers: []
+		};
+	}
+
+	// Add online players to the playerLogger object
+	if(mcsrvstat.oPlayers > 0)
+	{
+		for(let i = 0; i < mcsrvstat.oPlayers; i++)
+		{
+			// Update player's last online time
+			let player = mcsrvstat.listPlayers[i];
+
+			//prevent duplicates
+			if(!playerLogger.onlinePlayers.includes(player))
+			{
+				playerLogger.onlinePlayers.push(player);
+			}
+
+			playerLastOnline[player] = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' });
+		}
+	}
+
+	// Check if it has been a week since a player was last online
+	checkInactivePlayers(playerLogger);
+
+	// Write data to JSON files
+	fs.writeFileSync('player_log.json', JSON.stringify(playerLogger));
+	fs.writeFileSync('playerLastOnline.json', JSON.stringify(playerLastOnline));
+}
+
+function checkInactivePlayers(playerLogger) 
+{
+    const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
+    const currentTime = new Date();
+
+	//for each player in the file
+    for (const player in playerLastOnline) {
+		//get the last online time
+        const lastOnlineTime = playerLastOnline[player];
+		//add to overdue list
+        if (currentTime - lastOnlineTime >= oneWeekInMs && !playerLogger.overduePlayers.includes(player)) {
+            playerLogger.overduePlayers.push(player);
         }
+    }
 }
 
 //Bot boot up
@@ -98,10 +173,10 @@ client.on(Events.ClientReady, async () => {
   await mcsrvstat.fetchJavaServer(serverIP);
 
   //if online set pfp
-  if (mcsrvstat.status === true) {
-	client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
-  }
-  
+if (mcsrvstat.status === true) {
+	//client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
+}
+ 
   //set info and start scheduled messages
   setinfo();
   updater.start();

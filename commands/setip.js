@@ -1,7 +1,5 @@
 const { SlashCommandBuilder } = require('discord.js');
 var fs = require("fs");
-let response = ''; // Initialize the response variable
-
 
 module.exports = {
 	data: new SlashCommandBuilder()
