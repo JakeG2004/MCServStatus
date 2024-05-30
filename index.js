@@ -174,7 +174,7 @@ client.on(Events.ClientReady, async () => {
 
   //if online set pfp
 if (mcsrvstat.status === true) {
-	//client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
+	client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
 }
  
   //set info and start scheduled messages
