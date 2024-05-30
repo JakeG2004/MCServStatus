@@ -22,7 +22,8 @@ module.exports = {
 				{ name: '/info:', value : 'Brings up useful info regarding the server'},
 				{ name: '/setip', value: 'Sets the IP to be queried by /info'},
 				{ name: '/ping: ', value: 'Responds with pong'},
-				{ name: '/activity: ', value: 'Lists player activity'}
+				{ name: '/activity: ', value: 'Lists player activity'},
+				{ name: '/activity {username}: ', value: 'Gives the last active time of a certain user'}
 			)
 
 		interaction.reply({embeds: [embed]});
