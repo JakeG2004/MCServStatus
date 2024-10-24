@@ -28,14 +28,8 @@ module.exports = {
 					let playerLog = JSON.parse(data);
 
 					//get arrays
-					let players = playerLog.onlinePlayers;
-					let overdues = playerLog.overduePlayers;
-
-					//handle empty overdues
-					if(overdues.length === 0)
-					{
-						overdues = "No Overdue Players";
-					}
+					let players = playerLog.onlinePlayers.map(player => player.replace(/_/g, '\\_'));
+					let overdues = playerLog.overduePlayers.map(player => player.replace(/_/g, '\\_'));
 
 					//filter remove intersection from players and overdues
 					players = players.filter(x => !overdues.includes(x));
@@ -44,8 +38,8 @@ module.exports = {
 					const embed = new EmbedBuilder()
 					.setTitle(`User Activity Tracker`)
 					.addFields(
-						{ name: 'Players:', value: `${players}` },
-						{ name: 'Overdue Players:', value: `${overdues}` },
+						{ name: 'Recent Players:', value: players.length > 0 ? players.join(', ') : 'No recent players' },
+						{ name: 'Previous Players:', value: overdues.length > 0 ? overdues.join(', ') : 'No inactive players' },
 						{ name: 'Last Checked:', value: `${playerLog.checkedAt}`}
 					);
 

@@ -59,7 +59,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
 		//Command failed
 		console.error(error);
-		
+
 		//Command already handled
 		if(interaction.replied || interaction.deferred) {
 			await interaction.followUp({content: 'There was an error while executing this command', ephemeral: true});
@@ -144,24 +144,54 @@ function logPlayerActivity()
 	// Check if it has been a week since a player was last online
 	checkInactivePlayers(playerLogger);
 
+	//console.log(`Player logger: ${playerLogger.onlinePlayers}`);
+
 	// Write data to JSON files
 	fs.writeFileSync('player_log.json', JSON.stringify(playerLogger));
 	fs.writeFileSync('playerLastOnline.json', JSON.stringify(playerLastOnline));
 }
 
-function checkInactivePlayers(playerLogger) 
-{
+function checkInactivePlayers(playerLogger) {
     const oneWeekInMs = 7 * 24 * 60 * 60 * 1000; // 1 week in milliseconds
     const currentTime = new Date();
 
-	//for each player in the file
     for (const player in playerLastOnline) {
-		//get the last online time
-        const lastOnlineTime = playerLastOnline[player];
-		//add to overdue list
-        if (currentTime - lastOnlineTime >= oneWeekInMs && !playerLogger.overduePlayers.includes(player)) {
-            playerLogger.overduePlayers.push(player);
-        }
+        const lastOnlineTime = new Date(playerLastOnline[player]);
+	var elapsedTime = currentTime - lastOnlineTime;
+
+	//console.log(`One week in ms: ${oneWeekInMs}`);
+	//console.log(`${player} elapsed time: ${elapsedTime}`);
+
+        if (elapsedTime >= oneWeekInMs) {
+	    //console.log(`${player} has NOT been online recently`);
+            if(!playerLogger.overduePlayers.includes(player))
+	    {
+	        playerLogger.overduePlayers.push(player);
+	    }
+
+	    const curPlayerIndex = playerLogger.onlinePlayers.indexOf(player);
+	    if(curPlayerIndex != -1)
+	    {
+	        console.log(`Removing ${player} from online`);
+		playerLogger.onlinePlayers.splice(curPlayerIndex, 1);
+       	    }
+	 }
+
+	else
+	{
+	    //console.log(`${player} has been on recently`);
+	    if(!playerLogger.onlinePlayers.includes(player))
+	    {
+		playerLogger.onlinePlayers.push(player);
+	    }
+
+	    const curPlayerIndex = playerLogger.overduePlayers.indexOf(player);
+	    if(curPlayerIndex != -1)
+	    {
+		console.log(`Removing ${player} from overdue`);
+		playerLogger.overduePlayers.splice(curPlayerIndex, 1);
+	    }
+	}
     }
 }
 
@@ -174,7 +204,7 @@ client.on(Events.ClientReady, async () => {
 
   //if online set pfp
 if (mcsrvstat.status === true) {
-	client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
+	//client.user.setAvatar(`https://api.mcsrvstat.us/icon/${serverIP}`);
 }
  
   //set info and start scheduled messages

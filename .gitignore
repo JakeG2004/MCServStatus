@@ -3,3 +3,7 @@ config.json
 package.json
 package-lock.json
 node_modules/
+playerLastOnline.json
+player_log.json
+PLObak.json
+PLOGbak.json
